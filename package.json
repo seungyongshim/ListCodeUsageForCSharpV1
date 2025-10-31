@@ -2,7 +2,7 @@
   "name": "list-code-usages-csharp",
   "displayName": "C# Code Usages Finder",
   "description": "Find all usages of C# symbols with GitHub Copilot integration via MCP",
-  "version": "0.1.1",
+  "version": "0.1.4",
   "publisher": "your-publisher-name",
   "repository": {
     "type": "git",
@@ -16,7 +16,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onLanguage:csharp"
+    "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -36,7 +36,11 @@
         },
         "csharpCodeUsages.searchStrategies": {
           "type": "array",
-          "default": ["workspace", "document", "text"],
+          "default": [
+            "workspace",
+            "document",
+            "text"
+          ],
           "description": "Search strategies to use (in order)"
         },
         "csharpCodeUsages.enableMcpServer": {
@@ -54,15 +58,19 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "package": "vsce package"
+    "vscode:prepublish": "npm run package-bundle",
+    "compile": "npm run build",
+    "watch": "npm run watch-bundle",
+    "package": "vsce package",
+    "build": "node esbuild.js",
+    "watch-bundle": "node esbuild.js --watch",
+    "package-bundle": "node esbuild.js --production"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.96.0",
     "@vscode/vsce": "^3.0.0",
+    "esbuild": "^0.25.11",
     "typescript": "^5.3.0"
   },
   "dependencies": {

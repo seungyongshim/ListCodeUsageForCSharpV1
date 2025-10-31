@@ -1,13 +1,23 @@
 #!/usr/bin/env node
 
-import { Server } from '@modelcontextprotocol/sdk/server/index';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio';
+import { Server } from '@modelcontextprotocol/sdk/server';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
     CallToolRequestSchema,
     ListToolsRequestSchema,
     McpError,
     ErrorCode
-} from '@modelcontextprotocol/sdk/types';
+} from '@modelcontextprotocol/sdk/types.js';
+
+// VS Code extension module - will be available when running in extension context
+let vscodeModule: any = null;
+
+try {
+    // Dynamically import vscode module if available
+    vscodeModule = require('vscode');
+} catch (error) {
+    console.error('Warning: VS Code module not available. MCP server requires VS Code extension context.');
+}
 
 /**
  * MCP Server for C# Code Usages
@@ -112,15 +122,27 @@ class CSharpUsagesMcpServer {
     }
 
     private async findUsages(symbolName: string, filePaths?: string[]): Promise<any> {
-        // In a real implementation, this would communicate with the VS Code extension
-        // For now, we'll use a placeholder that expects the extension to handle this
-        
-        // This is a simplified version - in production, you'd need to:
-        // 1. Use VS Code API to execute commands
-        // 2. Or use IPC to communicate with the extension
-        // 3. Or use a shared service
-        
-        throw new Error('This server must be run within VS Code extension context');
+        if (!vscodeModule) {
+            throw new Error('VS Code module not available. This server must be run within VS Code extension context.');
+        }
+
+        try {
+            // Call the internal command registered by the extension
+            const result = await vscodeModule.commands.executeCommand(
+                'list_code_usages_csharp.findUsagesInternal',
+                symbolName,
+                filePaths
+            );
+
+            if (!result) {
+                throw new Error(`Symbol '${symbolName}' not found`);
+            }
+
+            return result;
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            throw new Error(`Failed to execute command: ${errorMessage}`);
+        }
     }
 
     async start(): Promise<void> {

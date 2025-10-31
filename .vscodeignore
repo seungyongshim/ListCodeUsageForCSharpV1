@@ -8,6 +8,7 @@ node_modules
 src/**
 tsconfig.json
 .vscode/**
+esbuild.js
 
 # Build artifacts
 dist

@@ -1,9 +1,18 @@
 import * as vscode from 'vscode';
+import { UsageFinder } from '../usageFinder';
 
 /**
  * MCP Server Definition Provider for C# Code Usages
+ * This provider runs the MCP server inside the extension process,
+ * allowing direct access to VS Code APIs
  */
 export class CSharpUsagesMcpProvider implements vscode.McpServerDefinitionProvider<vscode.McpStdioServerDefinition> {
+    private usageFinder: UsageFinder;
+
+    constructor(usageFinder: UsageFinder) {
+        this.usageFinder = usageFinder;
+    }
+
     async provideMcpServerDefinitions(): Promise<vscode.McpStdioServerDefinition[]> {
         const config = vscode.workspace.getConfiguration('csharpCodeUsages');
         const enabled = config.get<boolean>('enableMcpServer', true);
@@ -12,12 +21,14 @@ export class CSharpUsagesMcpProvider implements vscode.McpServerDefinitionProvid
             return [];
         }
 
-        const extensionPath = vscode.extensions.getExtension('your-publisher-name.list-code-usages-csharp')?.extensionPath;
-        if (!extensionPath) {
+        // Get the current extension context
+        const extension = vscode.extensions.getExtension('your-publisher-name.list-code-usages-csharp');
+        if (!extension) {
+            console.error('Extension not found. Make sure publisher name matches package.json');
             return [];
         }
 
-        const serverScript = vscode.Uri.joinPath(vscode.Uri.file(extensionPath), 'out', 'mcp', 'server.js');
+        const serverScript = vscode.Uri.joinPath(vscode.Uri.file(extension.extensionPath), 'out', 'mcp', 'server.js');
 
         return [
             new vscode.McpStdioServerDefinition(

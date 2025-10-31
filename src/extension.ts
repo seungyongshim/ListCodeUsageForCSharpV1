@@ -37,8 +37,8 @@ export function activate(context: vscode.ExtensionContext) {
     );
     context.subscriptions.push(findUsagesInternalDisposable);
 
-    // Register MCP server provider
-    const mcpProvider = new CSharpUsagesMcpProvider();
+    // Register MCP server provider with usageFinder instance
+    const mcpProvider = new CSharpUsagesMcpProvider(usageFinder);
     const mcpDisposable = vscode.lm.registerMcpServerDefinitionProvider(
         'csharp-code-usages',
         mcpProvider
