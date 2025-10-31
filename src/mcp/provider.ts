@@ -3,8 +3,7 @@ import { UsageFinder } from '../usageFinder';
 
 /**
  * MCP Server Definition Provider for C# Code Usages
- * This provider runs the MCP server inside the extension process,
- * allowing direct access to VS Code APIs
+ * This provider runs the MCP server as a separate process via stdio
  */
 export class CSharpUsagesMcpProvider implements vscode.McpServerDefinitionProvider<vscode.McpStdioServerDefinition> {
     private usageFinder: UsageFinder;
@@ -22,7 +21,7 @@ export class CSharpUsagesMcpProvider implements vscode.McpServerDefinitionProvid
         }
 
         // Get the current extension context
-        const extension = vscode.extensions.getExtension('your-publisher-name.list-code-usages-csharp');
+        const extension = vscode.extensions.getExtension('seungyongshim.list-code-usages-csharp');
         if (!extension) {
             console.error('Extension not found. Make sure publisher name matches package.json');
             return [];

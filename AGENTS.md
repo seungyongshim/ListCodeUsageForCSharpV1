@@ -16,4 +16,5 @@ C# 프로젝트에서 `list_code_usages` 도구가 실패하는 근본 원인을
 
 
 ### 꼭 참고해야 하는 링크
-https://code.visualstudio.com/api/extension-guides/ai/mcp#register-an-mcp-server-in-your-extension
+* https://github.com/microsoft/vscode-extension-samples/blob/main/mcp-extension-sample/src/extension.ts
+

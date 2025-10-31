@@ -2,8 +2,8 @@
   "name": "list-code-usages-csharp",
   "displayName": "C# Code Usages Finder",
   "description": "Find all usages of C# symbols with GitHub Copilot integration via MCP",
-  "version": "0.1.4",
-  "publisher": "your-publisher-name",
+  "version": "0.1.6",
+  "publisher": "seungyongshim",
   "repository": {
     "type": "git",
     "url": "https://github.com/seungyongshim/ListCodeUsageForCSharpV1.git"
@@ -24,6 +24,37 @@
       {
         "command": "list_code_usages_csharp.findUsages",
         "title": "Find C# Code Usages"
+      }
+    ],
+    "languageModelTools": [
+      {
+        "name": "find_csharp_usages",
+        "displayName": "Find C# Code Usages",
+        "description": "Find all usages of a C# symbol (class, method, property, etc.) in the workspace. Returns detailed information about where the symbol is used.",
+        "tags": [
+          "csharp",
+          "code-analysis",
+          "references"
+        ],
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "symbolName": {
+              "type": "string",
+              "description": "The name of the C# symbol to find usages for (e.g., 'Add', 'Calculator', 'JsonConvert')"
+            },
+            "filePaths": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Optional: Specific file paths to search in. If not provided, searches entire workspace."
+            }
+          },
+          "required": [
+            "symbolName"
+          ]
+        }
       }
     ],
     "configuration": {

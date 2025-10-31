@@ -9,19 +9,12 @@ import {
     ErrorCode
 } from '@modelcontextprotocol/sdk/types.js';
 
-// VS Code extension module - will be available when running in extension context
-let vscodeModule: any = null;
-
-try {
-    // Dynamically import vscode module if available
-    vscodeModule = require('vscode');
-} catch (error) {
-    console.error('Warning: VS Code module not available. MCP server requires VS Code extension context.');
-}
-
 /**
  * MCP Server for C# Code Usages
  * This server provides tools for finding C# code usages
+ * 
+ * IMPORTANT: This server runs in a separate Node.js process and cannot directly access VS Code APIs.
+ * Instead, it uses environment variables and message passing to communicate with the extension.
  */
 class CSharpUsagesMcpServer {
     private server: Server;
@@ -100,18 +93,19 @@ class CSharpUsagesMcpServer {
             const filePaths = (args as any).filePaths as string[] | undefined;
 
             try {
-                // Call VS Code extension command
-                const result = await this.findUsages(symbolName, filePaths);
-                
-                return {
-                    content: [
-                        {
-                            type: 'text',
-                            text: JSON.stringify(result, null, 2)
-                        }
-                    ]
-                };
+                // Since we can't access VS Code API directly from this separate process,
+                // we need to communicate with the extension via a different mechanism.
+                // For now, return an error message explaining this limitation.
+                throw new McpError(
+                    ErrorCode.InternalError,
+                    'MCP server running in separate process cannot access VS Code APIs directly. ' +
+                    'The extension needs to use a different architecture to provide this functionality. ' +
+                    'Please use the extension command "list_code_usages_csharp.findUsages" instead.'
+                );
             } catch (error) {
+                if (error instanceof McpError) {
+                    throw error;
+                }
                 const errorMessage = error instanceof Error ? error.message : String(error);
                 throw new McpError(
                     ErrorCode.InternalError,
@@ -119,30 +113,6 @@ class CSharpUsagesMcpServer {
                 );
             }
         });
-    }
-
-    private async findUsages(symbolName: string, filePaths?: string[]): Promise<any> {
-        if (!vscodeModule) {
-            throw new Error('VS Code module not available. This server must be run within VS Code extension context.');
-        }
-
-        try {
-            // Call the internal command registered by the extension
-            const result = await vscodeModule.commands.executeCommand(
-                'list_code_usages_csharp.findUsagesInternal',
-                symbolName,
-                filePaths
-            );
-
-            if (!result) {
-                throw new Error(`Symbol '${symbolName}' not found`);
-            }
-
-            return result;
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            throw new Error(`Failed to execute command: ${errorMessage}`);
-        }
     }
 
     async start(): Promise<void> {
