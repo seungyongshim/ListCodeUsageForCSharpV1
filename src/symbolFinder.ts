@@ -19,12 +19,15 @@ export class SymbolFinder {
         filePaths?: string[]
     ): Promise<vscode.Location | undefined> {
         const config = vscode.workspace.getConfiguration('csharpCodeUsages');
-        const strategies = config.get<string[]>('searchStrategies', ['workspace', 'document', 'text']);
+        const strategies = config.get<string[]>('searchStrategies', ['definition', 'workspace', 'document', 'text']);
 
         for (const strategy of strategies) {
             let result: vscode.Location | undefined;
 
             switch (strategy) {
+                case 'definition':
+                    result = await this.findUsingDefinitionProvider(symbolName, filePaths);
+                    break;
                 case 'workspace':
                     result = await this.findUsingWorkspaceSymbols(symbolName, filePaths);
                     break;
@@ -45,7 +48,62 @@ export class SymbolFinder {
     }
 
     /**
-     * Strategy 1: Use workspace symbol provider
+     * Strategy 1: Use definition provider from usage locations
+     * This works for external libraries (NuGet packages) that are referenced in the code
+     */
+    private async findUsingDefinitionProvider(
+        symbolName: string,
+        filePaths?: string[]
+    ): Promise<vscode.Location | undefined> {
+        const files = filePaths || await this.getAllCSharpFiles();
+        console.log(`[DefinitionProvider] Searching for '${symbolName}' in ${files.length} files`);
+
+        for (const filePath of files) {
+            try {
+                const uri = vscode.Uri.file(filePath);
+                const document = await vscode.workspace.openTextDocument(uri);
+                const text = document.getText();
+
+                // Find all occurrences of symbolName in the text
+                const regex = new RegExp(`\\b${symbolName}\\b`, 'g');
+                let match;
+                let matchCount = 0;
+
+                while ((match = regex.exec(text)) !== null) {
+                    matchCount++;
+                    const position = document.positionAt(match.index);
+                    console.log(`[DefinitionProvider] Found '${symbolName}' at ${filePath}:${position.line + 1}:${position.character + 1}`);
+
+                    // Try to get definition from this position
+                    const definitions = await vscode.commands.executeCommand<vscode.Location[]>(
+                        'vscode.executeDefinitionProvider',
+                        uri,
+                        position
+                    );
+
+                    console.log(`[DefinitionProvider] Got ${definitions?.length || 0} definitions`);
+
+                    if (definitions && definitions.length > 0) {
+                        // Found definition! Return the first one
+                        console.log(`[DefinitionProvider] ✓ Found definition: ${definitions[0].uri.fsPath}:${definitions[0].range.start.line + 1}`);
+                        return definitions[0];
+                    }
+                }
+
+                if (matchCount > 0) {
+                    console.log(`[DefinitionProvider] Found ${matchCount} occurrences in ${filePath}, but no definitions`);
+                }
+            } catch (error) {
+                console.error(`Definition provider search failed for ${filePath}:`, error);
+            }
+        }
+
+        console.log(`[DefinitionProvider] ✗ Symbol '${symbolName}' not found in any file`);
+        return undefined;
+    }
+
+    /**
+     * Strategy 2: Use workspace symbol provider
      */
     private async findUsingWorkspaceSymbols(
         symbolName: string,
@@ -71,7 +129,7 @@ export class SymbolFinder {
     }
 
     /**
-     * Strategy 2: Use document symbol provider
+     * Strategy 3: Use document symbol provider
      */
     private async findUsingDocumentSymbols(
         symbolName: string,
@@ -117,7 +175,7 @@ export class SymbolFinder {
     }
 
     /**
-     * Strategy 3: Text-based search with pattern matching
+     * Strategy 4: Text-based search with pattern matching
      */
     private async findUsingTextSearch(
         symbolName: string,

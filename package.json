@@ -2,7 +2,7 @@
   "name": "list-code-usages-csharp",
   "displayName": "C# Code Usages Finder",
   "description": "Find all usages of C# symbols with GitHub Copilot integration",
-  "version": "0.1.10",
+  "version": "0.1.12",
   "publisher": "seungyongshim",
   "repository": {
     "type": "git",
