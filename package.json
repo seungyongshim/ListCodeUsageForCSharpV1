@@ -45,7 +45,13 @@
           "description": "Enable MCP server for GitHub Copilot integration"
         }
       }
-    }
+    },
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "csharp-code-usages",
+        "label": "C# Code Usages MCP Server"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
