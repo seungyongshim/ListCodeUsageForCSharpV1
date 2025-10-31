@@ -26,6 +26,93 @@ export function activate(context: vscode.ExtensionContext) {
     );
     context.subscriptions.push(findUsagesCommandDisposable);
 
+    // Register test command for external library symbols
+    const testExternalLibCommand = vscode.commands.registerCommand(
+        'list_code_usages_csharp.testExternalLib',
+        async () => {
+            outputChannel.clear();
+            outputChannel.show();
+            outputChannel.appendLine('=== Testing External Library Symbol ===\n');
+            
+            try {
+                // 1. JsonHelper.cs 파일 열기
+                const filePath = 'z:\\2025\\ListCodeUsageForCSharpV1\\sample\\csharp\\JsonHelper.cs';
+                const uri = vscode.Uri.file(filePath);
+                const document = await vscode.workspace.openTextDocument(uri);
+                
+                outputChannel.appendLine(`Opened file: ${filePath}`);
+                
+                // 2. "SerializeObject" 텍스트 찾기
+                const text = document.getText();
+                const searchText = 'SerializeObject';
+                const index = text.indexOf(searchText);
+                
+                if (index === -1) {
+                    outputChannel.appendLine(`❌ '${searchText}' not found in file`);
+                    return;
+                }
+                
+                const position = document.positionAt(index);
+                outputChannel.appendLine(`Found '${searchText}' at line ${position.line + 1}, column ${position.character + 1}\n`);
+                
+                // 3. Definition Provider 호출
+                outputChannel.appendLine('Calling vscode.executeDefinitionProvider...');
+                const definitions = await vscode.commands.executeCommand<vscode.Location[]>(
+                    'vscode.executeDefinitionProvider',
+                    uri,
+                    position
+                );
+                
+                if (!definitions || definitions.length === 0) {
+                    outputChannel.appendLine('❌ No definitions found');
+                    return;
+                }
+                
+                outputChannel.appendLine(`✓ Found ${definitions.length} definition(s):`);
+                for (const def of definitions) {
+                    outputChannel.appendLine(`  - URI: ${def.uri.toString()}`);
+                    outputChannel.appendLine(`    Scheme: ${def.uri.scheme}`);
+                    outputChannel.appendLine(`    Path: ${def.uri.path}`);
+                    outputChannel.appendLine(`    FsPath: ${def.uri.fsPath}`);
+                    outputChannel.appendLine(`    Range: ${def.range.start.line + 1}:${def.range.start.character + 1}\n`);
+                }
+                
+                // 4. Reference Provider 호출
+                const firstDef = definitions[0];
+                outputChannel.appendLine('Calling vscode.executeReferenceProvider...');
+                try {
+                    const references = await vscode.commands.executeCommand<vscode.Location[]>(
+                        'vscode.executeReferenceProvider',
+                        firstDef.uri,
+                        firstDef.range.start
+                    );
+                    
+                    if (!references || references.length === 0) {
+                        outputChannel.appendLine('❌ No references found');
+                        return;
+                    }
+                    
+                    outputChannel.appendLine(`✓ Found ${references.length} reference(s):`);
+                    for (const ref of references) {
+                        const doc = await vscode.workspace.openTextDocument(ref.uri);
+                        const line = doc.lineAt(ref.range.start.line);
+                        outputChannel.appendLine(`  - ${ref.uri.fsPath}:${ref.range.start.line + 1}:${ref.range.start.character + 1}`);
+                        outputChannel.appendLine(`    ${line.text.trim()}`);
+                    }
+                    
+                    outputChannel.appendLine('\n✅ Test completed successfully!');
+                } catch (error) {
+                    const errorMsg = error instanceof Error ? error.message : String(error);
+                    outputChannel.appendLine(`❌ Reference Provider failed: ${errorMsg}`);
+                }
+            } catch (error) {
+                const errorMsg = error instanceof Error ? error.message : String(error);
+                outputChannel.appendLine(`❌ Test failed: ${errorMsg}`);
+            }
+        }
+    );
+    context.subscriptions.push(testExternalLibCommand);
+
     // Register Language Model Tool for GitHub Copilot
     // Note: Language Model Tools must be registered in code, not in package.json
     const tool = vscode.lm.registerTool('find_csharp_usages', {

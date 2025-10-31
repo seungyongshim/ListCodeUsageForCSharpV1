@@ -46,12 +46,19 @@ export class UsageFinder {
             throw new Error(`Symbol '${symbolName}' not found`);
         }
 
+        console.log(`[UsageFinder] Found symbol definition at ${location.uri.toString()}`);
+        console.log(`[UsageFinder] URI scheme: ${location.uri.scheme}, fsPath: ${location.uri.fsPath}`);
+
         // Step 2: Find all references
+        // Note: For external library symbols (e.g., csharp-metadata:// scheme),
+        // the reference provider should still work with the metadata URI
         const references = await vscode.commands.executeCommand<vscode.Location[]>(
             'vscode.executeReferenceProvider',
             location.uri,
             location.range.start
         );
+
+        console.log(`[UsageFinder] Found ${references?.length || 0} references`);
 
         if (!references) {
             return {
@@ -99,7 +106,8 @@ export class UsageFinder {
      * Check if a reference is the definition location
      */
     private isDefinitionLocation(ref: vscode.Location, definition: vscode.Location): boolean {
-        return ref.uri.fsPath === definition.uri.fsPath &&
+        // Compare URIs using toString() to handle special schemes like csharp-metadata://
+        return ref.uri.toString() === definition.uri.toString() &&
                ref.range.start.line === definition.range.start.line &&
                ref.range.start.character === definition.range.start.character;
     }

@@ -21,8 +21,12 @@ export class SymbolFinder {
         const config = vscode.workspace.getConfiguration('csharpCodeUsages');
         const strategies = config.get<string[]>('searchStrategies', ['definition', 'workspace', 'document', 'text']);
 
+        console.log(`[SymbolFinder] Searching for '${symbolName}' using strategies: ${strategies.join(', ')}`);
+
         for (const strategy of strategies) {
             let result: vscode.Location | undefined;
+
+            console.log(`[SymbolFinder] Trying strategy: ${strategy}`);
 
             switch (strategy) {
                 case 'definition':
@@ -40,7 +44,10 @@ export class SymbolFinder {
             }
 
             if (result) {
+                console.log(`[SymbolFinder] ✓ Strategy '${strategy}' found symbol at ${result.uri.fsPath}:${result.range.start.line + 1}`);
                 return result;
+            } else {
+                console.log(`[SymbolFinder] ✗ Strategy '${strategy}' did not find symbol`);
             }
         }
 
@@ -86,6 +93,7 @@ export class SymbolFinder {
                     if (definitions && definitions.length > 0) {
                         // Found definition! Return the first one
                         console.log(`[DefinitionProvider] ✓ Found definition: ${definitions[0].uri.fsPath}:${definitions[0].range.start.line + 1}`);
+                        console.log(`[DefinitionProvider] URI scheme: ${definitions[0].uri.scheme}, path: ${definitions[0].uri.path}`);
                         return definitions[0];
                     }
                 }

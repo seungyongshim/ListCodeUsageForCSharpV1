@@ -2,7 +2,7 @@
   "name": "list-code-usages-csharp",
   "displayName": "C# Code Usages Finder",
   "description": "Find all usages of C# symbols with GitHub Copilot integration",
-  "version": "0.1.12",
+  "version": "0.1.14",
   "publisher": "seungyongshim",
   "repository": {
     "type": "git",
@@ -24,6 +24,10 @@
       {
         "command": "list_code_usages_csharp.findUsages",
         "title": "Find C# Code Usages"
+      },
+      {
+        "command": "list_code_usages_csharp.testExternalLib",
+        "title": "Test External Library Symbol Detection"
       }
     ],
     "languageModelTools": [
@@ -64,11 +68,12 @@
         "csharpCodeUsages.searchStrategies": {
           "type": "array",
           "default": [
+            "definition",
             "workspace",
             "document",
             "text"
           ],
-          "description": "Search strategies to use (in order)"
+          "description": "Search strategies to use (in order). 'definition' strategy supports external libraries (NuGet packages)."
         }
       }
     }
