@@ -27,7 +27,9 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(findUsagesCommandDisposable);
 
     // Register Language Model Tool for GitHub Copilot
+    // Note: Language Model Tools must be registered in code, not in package.json
     const tool = vscode.lm.registerTool('find_csharp_usages', {
+        // Tool invocation handler
         invoke: async (options, token) => {
             const symbolName = options.input.symbolName;
             const filePaths = options.input.filePaths;
@@ -55,6 +57,7 @@ export function activate(context: vscode.ExtensionContext) {
                 ]);
             }
         },
+        // Optional: Prepare invocation message
         prepareInvocation: async (options, token) => {
             const symbolName = options.input.symbolName;
             return {

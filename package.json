@@ -2,7 +2,7 @@
   "name": "list-code-usages-csharp",
   "displayName": "C# Code Usages Finder",
   "description": "Find all usages of C# symbols with GitHub Copilot integration",
-  "version": "0.1.8",
+  "version": "0.1.10",
   "publisher": "seungyongshim",
   "repository": {
     "type": "git",
@@ -30,30 +30,26 @@
       {
         "name": "find_csharp_usages",
         "displayName": "Find C# Code Usages",
-        "description": "Find all usages of a C# symbol (class, method, property, etc.) in the workspace. Returns detailed information about where the symbol is used.",
-        "tags": [
-          "csharp",
-          "code-analysis",
-          "references"
-        ],
+        "modelDescription": "Find all usages of a C# symbol (class, method, property, etc.) in the workspace. Searches for references across all C# files.",
+        "toolReferenceName": "find_csharp_usages",
+        "userDescription": "Searches for all usages of a C# symbol in your workspace",
+        "canBeReferencedInPrompt": true,
         "inputSchema": {
           "type": "object",
           "properties": {
             "symbolName": {
               "type": "string",
-              "description": "The name of the C# symbol to find usages for (e.g., 'Add', 'Calculator', 'JsonConvert')"
+              "description": "The name of the C# symbol to find usages for (e.g., class name, method name, property name)"
             },
             "filePaths": {
               "type": "array",
+              "description": "Optional: Absolute paths to C# files where the symbol might be defined",
               "items": {
                 "type": "string"
-              },
-              "description": "Optional: Specific file paths to search in. If not provided, searches entire workspace."
+              }
             }
           },
-          "required": [
-            "symbolName"
-          ]
+          "required": ["symbolName"]
         }
       }
     ],
