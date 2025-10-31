@@ -3,7 +3,6 @@ import { SymbolCache } from './symbolCache';
 import { SymbolFinder } from './symbolFinder';
 import { UsageFinder } from './usageFinder';
 import { findUsagesCommand } from './commands';
-import { CSharpUsagesMcpProvider } from './mcp/provider';
 
 let outputChannel: vscode.OutputChannel;
 let usageFinder: UsageFinder;
@@ -65,16 +64,14 @@ export function activate(context: vscode.ExtensionContext) {
     });
     context.subscriptions.push(tool);
 
-    // Register MCP server provider with usageFinder instance  
-    const mcpProvider = new CSharpUsagesMcpProvider(usageFinder);
-    const mcpDisposable = vscode.lm.registerMcpServerDefinitionProvider(
-        'csharp-code-usages',
-        mcpProvider
-    );
-    context.subscriptions.push(mcpDisposable);
+    // Note: We don't need a separate MCP server process since we're providing
+    // the functionality directly via Language Model Tools above.
+    // External MCP servers run in separate processes and can't access VS Code APIs.
+    // Our tool is already available to Copilot via vscode.lm.registerTool.
 
     outputChannel.appendLine('C# Code Usages extension activated successfully');
     outputChannel.appendLine('Language Model Tool registered: find_csharp_usages');
+    outputChannel.appendLine('Tool is now available to GitHub Copilot');
 }
 
 export function deactivate() {

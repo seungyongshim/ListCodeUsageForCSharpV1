@@ -1,8 +1,8 @@
 {
   "name": "list-code-usages-csharp",
   "displayName": "C# Code Usages Finder",
-  "description": "Find all usages of C# symbols with GitHub Copilot integration via MCP",
-  "version": "0.1.6",
+  "description": "Find all usages of C# symbols with GitHub Copilot integration",
+  "version": "0.1.8",
   "publisher": "seungyongshim",
   "repository": {
     "type": "git",
@@ -73,20 +73,9 @@
             "text"
           ],
           "description": "Search strategies to use (in order)"
-        },
-        "csharpCodeUsages.enableMcpServer": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable MCP server for GitHub Copilot integration"
         }
       }
-    },
-    "mcpServerDefinitionProviders": [
-      {
-        "id": "csharp-code-usages",
-        "label": "C# Code Usages MCP Server"
-      }
-    ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package-bundle",
