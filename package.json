@@ -1,0 +1,65 @@
+{
+  "name": "list-code-usages-csharp",
+  "displayName": "C# Code Usages Finder",
+  "description": "Find all usages of C# symbols with GitHub Copilot integration via MCP",
+  "version": "0.1.0",
+  "publisher": "your-publisher-name",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/seungyongshim/ListCodeUsageForCSharpV1.git"
+  },
+  "engines": {
+    "vscode": "^1.96.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:csharp"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "list_code_usages_csharp.findUsages",
+        "title": "Find C# Code Usages"
+      }
+    ],
+    "configuration": {
+      "title": "C# Code Usages",
+      "properties": {
+        "csharpCodeUsages.enableCache": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable caching for symbol positions"
+        },
+        "csharpCodeUsages.searchStrategies": {
+          "type": "array",
+          "default": ["workspace", "document", "text"],
+          "description": "Search strategies to use (in order)"
+        },
+        "csharpCodeUsages.enableMcpServer": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable MCP server for GitHub Copilot integration"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.96.0",
+    "@vscode/vsce": "^3.0.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  }
+}

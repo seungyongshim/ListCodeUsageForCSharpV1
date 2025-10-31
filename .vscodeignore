@@ -1,0 +1,29 @@
+# VS Code Extension Files
+node_modules
+*.vsix
+.vscode-test
+.DS_Store
+
+# Source files (keep compiled output)
+src/**
+tsconfig.json
+.vscode/**
+
+# Build artifacts
+dist
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+Thumbs.db
+
+# Sample files (optional - remove if you want to include them)
+sample/**
+README.old.md
+plan.md
+확장도구.md
