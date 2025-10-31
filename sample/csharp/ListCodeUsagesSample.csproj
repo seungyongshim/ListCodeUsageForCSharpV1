@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>ListCodeUsagesSample</RootNamespace>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <!-- 외부 라이브러리 참조 추가 - list_code_usages 도구가 외부 라이브러리를 어떻게 처리하는지 테스트 -->
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+</Project>

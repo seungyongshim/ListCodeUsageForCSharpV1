@@ -1,0 +1,16 @@
+{
+  "name": "list-code-usages-nodejs-sample",
+  "version": "1.0.0",
+  "description": "Sample Node.js project to test list_code_usages tool",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "keywords": ["test", "list_code_usages"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "moment": "^2.29.4"
+  }
+}
