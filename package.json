@@ -2,7 +2,7 @@
   "name": "list-code-usages-csharp",
   "displayName": "C# Code Usages Finder",
   "description": "Find all usages of C# symbols with GitHub Copilot integration",
-  "version": "0.1.14",
+  "version": "0.1.16",
   "publisher": "seungyongshim",
   "repository": {
     "type": "git",
@@ -28,26 +28,55 @@
       {
         "command": "list_code_usages_csharp.testExternalLib",
         "title": "Test External Library Symbol Detection"
+      },
+      {
+        "command": "list_code_usages_csharp.testDiagnostic",
+        "title": "Test C# Language Server Capabilities"
       }
     ],
     "languageModelTools": [
       {
-        "name": "find_csharp_usages",
-        "displayName": "Find C# Code Usages",
-        "modelDescription": "Find all usages of a C# symbol (class, method, property, etc.) in the workspace. Searches for references across all C# files.",
-        "toolReferenceName": "find_csharp_usages",
-        "userDescription": "Searches for all usages of a C# symbol in your workspace",
+        "name": "find_symbol_usages",
+        "displayName": "Find Symbol Usages",
+        "modelDescription": "Find all usages of a symbol (class, method, property, etc.) in the workspace. Works with C#, Python, JavaScript, and other languages supported by VS Code.",
+        "toolReferenceName": "find_symbol_usages",
+        "userDescription": "Searches for all usages of a symbol in your workspace (supports multiple languages)",
         "canBeReferencedInPrompt": true,
         "inputSchema": {
           "type": "object",
           "properties": {
             "symbolName": {
               "type": "string",
-              "description": "The name of the C# symbol to find usages for (e.g., class name, method name, property name)"
+              "description": "The name of the symbol to find usages for (e.g., class name, method name, property name, function name)"
             },
             "filePaths": {
               "type": "array",
-              "description": "Optional: Absolute paths to C# files where the symbol might be defined",
+              "description": "Optional: Absolute paths to files where the symbol might be defined",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": ["symbolName"]
+        }
+      },
+      {
+        "name": "find_implementations",
+        "displayName": "Find Implementations",
+        "modelDescription": "Find all implementations of an interface or all overrides of an abstract/virtual method.",
+        "toolReferenceName": "find_implementations",
+        "userDescription": "Finds all concrete implementations of an interface or abstract member",
+        "canBeReferencedInPrompt": true,
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "symbolName": {
+              "type": "string",
+              "description": "The name of the interface or abstract member to find implementations for"
+            },
+            "filePaths": {
+              "type": "array",
+              "description": "Optional: Absolute paths to files where the symbol might be defined",
               "items": {
                 "type": "string"
               }

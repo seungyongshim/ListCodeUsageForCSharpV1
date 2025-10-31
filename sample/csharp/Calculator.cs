@@ -5,9 +5,9 @@ namespace ListCodeUsagesSample
     /// <summary>
     /// 계산기 클래스
     /// </summary>
-    public class Calculator
+    public class Calculator : ICalculator
     {
-        public int Result { get; private set; }
+        public int Result { get; protected set; }
 
         public Calculator()
         {

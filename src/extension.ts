@@ -2,10 +2,12 @@ import * as vscode from 'vscode';
 import { SymbolCache } from './symbolCache';
 import { SymbolFinder } from './symbolFinder';
 import { UsageFinder } from './usageFinder';
+import { AdvancedAnalyzer } from './advancedAnalyzer';
 import { findUsagesCommand } from './commands';
 
 let outputChannel: vscode.OutputChannel;
 let usageFinder: UsageFinder;
+let advancedAnalyzer: AdvancedAnalyzer;
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('C# Code Usages extension is now active');
@@ -18,6 +20,7 @@ export function activate(context: vscode.ExtensionContext) {
     const cache = new SymbolCache();
     const symbolFinder = new SymbolFinder(cache);
     usageFinder = new UsageFinder(symbolFinder);
+    advancedAnalyzer = new AdvancedAnalyzer();
 
     // Register commands
     const findUsagesCommandDisposable = vscode.commands.registerCommand(
@@ -25,6 +28,99 @@ export function activate(context: vscode.ExtensionContext) {
         () => findUsagesCommand(usageFinder, outputChannel)
     );
     context.subscriptions.push(findUsagesCommandDisposable);
+
+    // Register diagnostic test command
+    const testDiagnosticCommand = vscode.commands.registerCommand(
+        'list_code_usages_csharp.testDiagnostic',
+        async () => {
+            outputChannel.clear();
+            outputChannel.show();
+            outputChannel.appendLine('=== Testing C# Language Server Capabilities ===\n');
+            
+            const editor = vscode.window.activeTextEditor;
+            if (!editor) {
+                outputChannel.appendLine('❌ No active editor');
+                return;
+            }
+            
+            const uri = editor.document.uri;
+            const position = editor.selection.active;
+            
+            outputChannel.appendLine(`File: ${uri.fsPath}`);
+            outputChannel.appendLine(`Position: Line ${position.line + 1}, Column ${position.character + 1}\n`);
+            
+            // Test Call Hierarchy
+            outputChannel.appendLine('Testing Call Hierarchy...');
+            try {
+                const callItems = await vscode.commands.executeCommand<any[]>(
+                    'vscode.prepareCallHierarchy',
+                    uri,
+                    position
+                );
+                if (callItems && callItems.length > 0) {
+                    outputChannel.appendLine(`✓ Call Hierarchy supported: ${callItems[0].name}`);
+                } else {
+                    outputChannel.appendLine('⚠ Call Hierarchy: No items returned');
+                }
+            } catch (error) {
+                outputChannel.appendLine(`❌ Call Hierarchy: ${error}`);
+            }
+            
+            // Test Type Hierarchy
+            outputChannel.appendLine('\nTesting Type Hierarchy...');
+            try {
+                const typeItems = await vscode.commands.executeCommand<any[]>(
+                    'vscode.prepareTypeHierarchy',
+                    uri,
+                    position
+                );
+                if (typeItems && typeItems.length > 0) {
+                    outputChannel.appendLine(`✓ Type Hierarchy supported: ${typeItems[0].name}`);
+                } else {
+                    outputChannel.appendLine('⚠ Type Hierarchy: No items returned');
+                }
+            } catch (error) {
+                outputChannel.appendLine(`❌ Type Hierarchy: ${error}`);
+            }
+            
+            // Test Implementation Provider
+            outputChannel.appendLine('\nTesting Implementation Provider...');
+            try {
+                const impls = await vscode.commands.executeCommand<vscode.Location[]>(
+                    'vscode.executeImplementationProvider',
+                    uri,
+                    position
+                );
+                if (impls && impls.length > 0) {
+                    outputChannel.appendLine(`✓ Implementation Provider: Found ${impls.length} implementation(s)`);
+                } else {
+                    outputChannel.appendLine('⚠ Implementation Provider: No results');
+                }
+            } catch (error) {
+                outputChannel.appendLine(`❌ Implementation Provider: ${error}`);
+            }
+            
+            // Test Reference Provider
+            outputChannel.appendLine('\nTesting Reference Provider...');
+            try {
+                const refs = await vscode.commands.executeCommand<vscode.Location[]>(
+                    'vscode.executeReferenceProvider',
+                    uri,
+                    position
+                );
+                if (refs && refs.length > 0) {
+                    outputChannel.appendLine(`✓ Reference Provider: Found ${refs.length} reference(s)`);
+                } else {
+                    outputChannel.appendLine('⚠ Reference Provider: No results');
+                }
+            } catch (error) {
+                outputChannel.appendLine(`❌ Reference Provider: ${error}`);
+            }
+            
+            outputChannel.appendLine('\n=== Test Complete ===');
+        }
+    );
+    context.subscriptions.push(testDiagnosticCommand);
 
     // Register test command for external library symbols
     const testExternalLibCommand = vscode.commands.registerCommand(
@@ -115,7 +211,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Register Language Model Tool for GitHub Copilot
     // Note: Language Model Tools must be registered in code, not in package.json
-    const tool = vscode.lm.registerTool('find_csharp_usages', {
+    const tool = vscode.lm.registerTool('find_symbol_usages', {
         // Tool invocation handler
         invoke: async (options, token) => {
             const symbolName = options.input.symbolName;
@@ -154,14 +250,72 @@ export function activate(context: vscode.ExtensionContext) {
     });
     context.subscriptions.push(tool);
 
+    // Tool 2: Find Implementations
+    const implementationsTool = vscode.lm.registerTool('find_implementations', {
+        invoke: async (options, token) => {
+            const symbolName = options.input.symbolName;
+            const filePaths = options.input.filePaths;
+
+            if (!symbolName || typeof symbolName !== 'string') {
+                throw new Error('symbolName is required and must be a string');
+            }
+
+            try {
+                // Find symbol location first
+                const location = await symbolFinder.findSymbolPosition(symbolName, filePaths);
+                if (!location) {
+                    throw new Error(`Symbol '${symbolName}' not found`);
+                }
+
+                // Find implementations
+                const info = await advancedAnalyzer.findImplementations(
+                    location.uri,
+                    location.range.start
+                );
+
+                if (!info) {
+                    return new vscode.LanguageModelToolResult([
+                        new vscode.LanguageModelTextPart(`No implementations found for '${symbolName}'`)
+                    ]);
+                }
+
+                return new vscode.LanguageModelToolResult([
+                    new vscode.LanguageModelTextPart(JSON.stringify({
+                        symbolName: info.symbolName,
+                        totalCount: info.implementations.length,
+                        implementations: info.implementations.map(impl => ({
+                            file: impl.uri.fsPath,
+                            line: impl.range.start.line + 1,
+                            column: impl.range.start.character + 1
+                        }))
+                    }, null, 2))
+                ]);
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                return new vscode.LanguageModelToolResult([
+                    new vscode.LanguageModelTextPart(`Error: ${errorMessage}`)
+                ]);
+            }
+        },
+        prepareInvocation: async (options, token) => {
+            const symbolName = options.input.symbolName;
+            return {
+                invocationMessage: `Finding implementations of '${symbolName}'...`
+            };
+        }
+    });
+    context.subscriptions.push(implementationsTool);
+
     // Note: We don't need a separate MCP server process since we're providing
     // the functionality directly via Language Model Tools above.
     // External MCP servers run in separate processes and can't access VS Code APIs.
     // Our tool is already available to Copilot via vscode.lm.registerTool.
 
     outputChannel.appendLine('C# Code Usages extension activated successfully');
-    outputChannel.appendLine('Language Model Tool registered: find_csharp_usages');
-    outputChannel.appendLine('Tool is now available to GitHub Copilot');
+    outputChannel.appendLine('Language Model Tools registered:');
+    outputChannel.appendLine('  - find_symbol_usages (Find all references to a symbol)');
+    outputChannel.appendLine('  - find_implementations (Find all implementations of an interface/abstract member)');
+    outputChannel.appendLine('Tools are now available to GitHub Copilot');
 }
 
 export function deactivate() {
